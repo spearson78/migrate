@@ -8,8 +8,10 @@ import (
 
 func Apply(db *sql.DB, migrations []Migration) (err error) {
 
+	log.Println("Apply")
 	err = initializeSchema(db)
 	if err != nil {
+		log.Printf("initializeSchema failed %v", err)
 		return err
 	}
 
@@ -43,18 +45,20 @@ func initializeSchema(db *sql.DB) error {
 
 func applyDbChange(db *sql.DB, m Migration) (err error) {
 
+	log.Printf("applyDbChange %v", m.Id)
+
 	tx, err := db.Begin()
 	if err != nil {
-		return
+		return err
 	}
 
 	row := tx.QueryRow("INSERT INTO DB_CHANGELOG (ID) VALUES(?)", m.Id)
 	err = row.Scan()
 	if err == sql.ErrNoRows {
-		log.Printf("applying migration %v", m.Id)
+		log.Printf("applying migration %v\n", m.Id)
 		err = m.Migration(tx)
 	} else {
-		log.Printf("migration %v already applied : %v", m.Id, err)
+		log.Printf("migration %v already applied : %v\n", m.Id, err)
 		//migration already applied
 		err = nil
 	}
