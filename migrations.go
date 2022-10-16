@@ -51,9 +51,10 @@ func applyDbChange(db *sql.DB, m Migration) (err error) {
 	row := tx.QueryRow("INSERT INTO DB_CHANGELOG (ID) VALUES(?)", m.Id)
 	err = row.Scan()
 	if err == sql.ErrNoRows {
-		log.Println("applying migration", m.Id)
+		log.Printf("applying migration %v", m.Id)
 		err = m.Migration(tx)
 	} else {
+		log.Printf("migration %v already applied : %v", m.Id, err)
 		//migration already applied
 		err = nil
 	}
