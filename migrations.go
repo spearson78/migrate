@@ -7,11 +7,9 @@ import (
 
 func Apply(db *sql.DB, migrations []Migration) (err error) {
 
-	fmt.Println("Apply")
 	err = initializeSchema(db)
 	if err != nil {
-		fmt.Printf("initializeSchema failed %v\n", err)
-		return err
+		return fmt.Errorf("initializeSchema: %w", err)
 	}
 
 	for _, migration := range migrations {
@@ -44,8 +42,6 @@ func initializeSchema(db *sql.DB) error {
 
 func applyDbChange(db *sql.DB, m Migration) (err error) {
 
-	fmt.Printf("applyDbChange %v\n", m.Id)
-
 	tx, err := db.Begin()
 	if err != nil {
 		return err
@@ -54,10 +50,8 @@ func applyDbChange(db *sql.DB, m Migration) (err error) {
 	row := tx.QueryRow("INSERT INTO DB_CHANGELOG (ID) VALUES(?)", m.Id)
 	err = row.Scan()
 	if err == sql.ErrNoRows {
-		fmt.Printf("applying migration %v\n", m.Id)
 		err = m.Migration(tx)
 	} else {
-		fmt.Printf("migration %v already applied : %v\n", m.Id, err)
 		//migration already applied
 		err = nil
 	}
@@ -68,5 +62,10 @@ func applyDbChange(db *sql.DB, m Migration) (err error) {
 		tx.Rollback()
 	}
 
-	return fmt.Errorf("migration error id: %v err: %w", m.Id, err)
+	if err != nil {
+		return fmt.Errorf("migration error id: %v err: %w", m.Id, err)
+	} else {
+		return nil
+	}
+
 }
