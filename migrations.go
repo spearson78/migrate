@@ -3,15 +3,14 @@ package migrate
 import (
 	"database/sql"
 	"fmt"
-	"log"
 )
 
 func Apply(db *sql.DB, migrations []Migration) (err error) {
 
-	log.Println("Apply")
+	fmt.Println("Apply")
 	err = initializeSchema(db)
 	if err != nil {
-		log.Printf("initializeSchema failed %v", err)
+		fmt.Printf("initializeSchema failed %v\n", err)
 		return err
 	}
 
@@ -45,7 +44,7 @@ func initializeSchema(db *sql.DB) error {
 
 func applyDbChange(db *sql.DB, m Migration) (err error) {
 
-	log.Printf("applyDbChange %v", m.Id)
+	fmt.Printf("applyDbChange %v\n", m.Id)
 
 	tx, err := db.Begin()
 	if err != nil {
@@ -55,10 +54,10 @@ func applyDbChange(db *sql.DB, m Migration) (err error) {
 	row := tx.QueryRow("INSERT INTO DB_CHANGELOG (ID) VALUES(?)", m.Id)
 	err = row.Scan()
 	if err == sql.ErrNoRows {
-		log.Printf("applying migration %v\n", m.Id)
+		fmt.Printf("applying migration %v\n", m.Id)
 		err = m.Migration(tx)
 	} else {
-		log.Printf("migration %v already applied : %v\n", m.Id, err)
+		fmt.Printf("migration %v already applied : %v\n", m.Id, err)
 		//migration already applied
 		err = nil
 	}
