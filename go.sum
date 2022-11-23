@@ -1,0 +1,4 @@
+github.com/Southclaws/fault v0.4.3 h1:T6NaT0XAHqVE+s/42sg0WP2sm1iEYm5CveFC/TJn5O8=
+github.com/Southclaws/fault v0.4.3/go.mod h1:ykAz97glbxwopwRqAPfQMy8/Y4O+s3c6YtXwaSbxnEg=
+github.com/spearson78/fsql v0.0.0-20221123182140-b6c3d4b9c6a8 h1:D4hftRmzBPEl98ekkQdfyBjajJGYR4FYnTGiNfZbmg4=
+github.com/spearson78/fsql v0.0.0-20221123182140-b6c3d4b9c6a8/go.mod h1:oIhRnOFszkdBKq9wK7OqKGa5CKfc83alV3Yh6186cYY=

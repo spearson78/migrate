@@ -2,7 +2,10 @@ package migrate
 
 import (
 	"database/sql"
+	"errors"
 	"fmt"
+
+	"github.com/spearson78/fsql"
 )
 
 func Apply(db *sql.DB, migrations []Migration) (err error) {
@@ -29,43 +32,39 @@ func initializeSchema(db *sql.DB) error {
 	//TODO: support different DB types
 
 	//Ensure DB_CHANGELOG table exists
-	row := db.QueryRow("SELECT 1 FROM sqlite_master WHERE type='table' AND name='DB_CHANGELOG'")
-	if row.Scan() == sql.ErrNoRows {
-		_, err := db.Exec("CREATE TABLE DB_CHANGELOG (ID TEXT PRIMARY KEY)")
+	_, err := fsql.QueryRow(db, "SELECT 1 FROM sqlite_master WHERE type='table' AND name='DB_CHANGELOG'")
+	if errors.Is(err, sql.ErrNoRows) {
+		_, err := fsql.Exec(db, "CREATE TABLE DB_CHANGELOG (ID TEXT PRIMARY KEY)")
 		if err != nil {
 			return err
 		}
+		return nil
+	} else {
+		return err
 	}
-
-	return nil
 }
 
 func applyDbChange(db *sql.DB, m Migration) (err error) {
 
 	tx, err := db.Begin()
 	if err != nil {
-		return err
+		return Wrap(err, m.Id)
 	}
 
-	row := tx.QueryRow("INSERT INTO DB_CHANGELOG (ID) VALUES(?)", m.Id)
-	err = row.Scan()
-	if err == sql.ErrNoRows {
-		err = m.Migration(tx)
+	_, err = fsql.QueryRow(tx, "INSERT INTO DB_CHANGELOG (ID) VALUES(?)", m.Id)
+	if errors.Is(err, sql.ErrNoRows) {
+		err = Wrap(m.Migration(tx), m.Id)
 	} else {
 		//migration already applied
 		err = nil
 	}
 
 	if err == nil {
-		tx.Commit()
+		err = Wrap(tx.Commit(), m.Id)
+
 	} else {
 		tx.Rollback()
 	}
 
-	if err != nil {
-		return fmt.Errorf("migration error id: %v err: %w", m.Id, err)
-	} else {
-		return nil
-	}
-
+	return err
 }
