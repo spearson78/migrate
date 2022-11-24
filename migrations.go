@@ -7,6 +7,7 @@ import (
 
 	"github.com/Southclaws/fault"
 	"github.com/spearson78/fsql"
+	"modernc.org/sqlite"
 )
 
 func Apply(db *sql.DB, migrations []Migration) (err error) {
@@ -53,26 +54,26 @@ func applyDbChange(db *sql.DB, m Migration) (err error) {
 		return fault.Wrap(err, With(m.Id))
 	}
 
-	row, err := fsql.QueryRow(tx, "INSERT INTO DB_CHANGELOG (ID) VALUES(?)", m.Id)
-	row.Scan()
-	if errors.Is(err, sql.ErrNoRows) {
-		err = m.Migration(tx)
-		if err != nil {
-			err = fault.Wrap(err, With(m.Id))
+	_, err = fsql.Exec(tx, "INSERT INTO DB_CHANGELOG (ID) VALUES(?)", m.Id)
+	if err != nil {
+		//Could not insert maybe DB error or constraint violation
+		var sqliteError *sqlite.Error
+		if errors.As(err, &sqliteError) && sqliteError.Code() == 1555 { //Primary key violation
+			err = nil
 		}
 	} else {
-		//migration already applied
-		err = nil
+		//The row was inserted apply the DB change
+		err = m.Migration(tx)
 	}
 
 	if err == nil {
 		err = tx.Commit()
-		if err != nil {
-			err = fault.Wrap(err, With(m.Id))
-		}
 	} else {
 		tx.Rollback()
 	}
 
+	if err != nil {
+		err = fault.Wrap(err, With(m.Id))
+	}
 	return err
 }
