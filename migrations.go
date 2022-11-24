@@ -3,9 +3,9 @@ package migrate
 import (
 	"database/sql"
 	"errors"
-	"fmt"
 
 	"github.com/Southclaws/fault"
+	"github.com/Southclaws/fault/floc"
 	"github.com/spearson78/fsql"
 	"modernc.org/sqlite"
 )
@@ -14,14 +14,14 @@ func Apply(db *sql.DB, migrations []Migration) (err error) {
 
 	err = initializeSchema(db)
 	if err != nil {
-		return fmt.Errorf("initializeSchema: %w", err)
+		return fault.Wrap(err, floc.WithDepth(1))
 	}
 
 	for _, migration := range migrations {
 
 		err := applyDbChange(db, migration)
 		if err != nil {
-			return err
+			return fault.Wrap(err, floc.WithDepth(1))
 		}
 
 	}
