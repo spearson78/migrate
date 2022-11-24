@@ -5,6 +5,7 @@ import (
 	"errors"
 	"fmt"
 
+	"github.com/Southclaws/fault"
 	"github.com/spearson78/fsql"
 )
 
@@ -32,8 +33,7 @@ func initializeSchema(db *sql.DB) error {
 	//TODO: support different DB types
 
 	//Ensure DB_CHANGELOG table exists
-	row, err := fsql.QueryRow(db, "SELECT 1 FROM sqlite_master WHERE type='table' AND name='DB_CHANGELOG'")
-	row.Scan()
+	_, err := fsql.QueryRow(db, "SELECT 1 FROM sqlite_master WHERE type='table' AND name='DB_CHANGELOG'")
 	if errors.Is(err, sql.ErrNoRows) {
 		_, err := fsql.Exec(db, "CREATE TABLE DB_CHANGELOG (ID TEXT PRIMARY KEY)")
 		if err != nil {
@@ -49,13 +49,15 @@ func applyDbChange(db *sql.DB, m Migration) (err error) {
 
 	tx, err := db.Begin()
 	if err != nil {
-		return Wrap(err, m.Id)
+		return fault.Wrap(err, With(m.Id))
 	}
 
-	row, err := fsql.QueryRow(tx, "INSERT INTO DB_CHANGELOG (ID) VALUES(?)", m.Id)
-	row.Scan()
+	_, err = fsql.QueryRow(tx, "INSERT INTO DB_CHANGELOG (ID) VALUES(?)", m.Id)
 	if errors.Is(err, sql.ErrNoRows) {
-		err = Wrap(m.Migration(tx), m.Id)
+		err = m.Migration(tx)
+		if err != nil {
+			err = fault.Wrap(err, With(m.Id))
+		}
 	} else {
 		//migration already applied
 		err = nil
@@ -63,7 +65,9 @@ func applyDbChange(db *sql.DB, m Migration) (err error) {
 
 	if err == nil {
 		err = tx.Commit()
-		err = Wrap(err, m.Id)
+		if err != nil {
+			err = fault.Wrap(err, With(m.Id))
+		}
 	} else {
 		tx.Rollback()
 	}

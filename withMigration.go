@@ -26,7 +26,7 @@ func Wrap(err error, migrationName string) error {
 	}
 }
 
-func With[E any](sql string, migrationName string) func(error) error {
+func With(migrationName string) func(error) error {
 	return func(err error) error {
 		return Wrap(err, migrationName)
 	}
