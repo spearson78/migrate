@@ -4,8 +4,8 @@ import (
 	"database/sql"
 	"errors"
 
-	"github.com/Southclaws/fault"
-	"github.com/Southclaws/fault/floc"
+	"github.com/spearson78/fault"
+	"github.com/spearson78/fault/floc"
 	"github.com/spearson78/fsql"
 	"modernc.org/sqlite"
 )

@@ -2,7 +2,7 @@ module github.com/spearson78/migrate
 
 go 1.19
 
-require github.com/spearson78/fsql v0.0.2
+require github.com/spearson78/fsql v0.0.3
 
 require (
 	github.com/google/uuid v1.3.0 // indirect
@@ -25,8 +25,6 @@ require (
 )
 
 require (
-	github.com/Southclaws/fault v0.4.3
+	github.com/spearson78/fault v0.4.4-floc
 	modernc.org/sqlite v1.19.4
 )
-
-replace github.com/Southclaws/fault => github.com/spearson78/fault v0.4.3-floc
