@@ -36,7 +36,8 @@ func initializeSchema(db *sql.DB) error {
 	//Ensure DB_CHANGELOG table exists
 	row, err := fsql.QueryRow(db, "SELECT 1 FROM sqlite_master WHERE type='table' AND name='DB_CHANGELOG'")
 	if err == nil {
-		err = row.Scan()
+		var r int
+		err = row.Scan(&r)
 	}
 	if errors.Is(err, sql.ErrNoRows) {
 		_, err := fsql.Exec(db, "CREATE TABLE DB_CHANGELOG (ID TEXT PRIMARY KEY)")
